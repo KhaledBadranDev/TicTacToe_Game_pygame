@@ -4,7 +4,7 @@ AUTHOR: KHALED BADRAN
 """
 
 import pygame 
-import button 
+import buttons 
 
 pygame.init()
 
@@ -14,14 +14,17 @@ pygame.init()
 DISPLAY_SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
 OFFSET_HEIGHT_UP = 100
 
-BUTTON_COLOR = (4, 30, 66) #Sailor Blue
-BUTTON_HOVER_OVER_COLOR = (249, 87, 0) #Orange 
+BUTTON_COLOR= TILE_OCCUPIED_COLOR = (4, 30, 66) #Sailor Blue
+BUTTON_HOVER_OVER_COLOR= TILE_HOVER_OVER_COLOR = (249, 87, 0) #Orange 
 TEXT_COLOR = (249, 87, 0)
 BUTTON_TEXT_HOVER_OVER_COLOR = (4, 30, 66)
 BUTTON_BORDER_COLOR = (95, 95, 96) #Grey
 BUTTON_WIDTH = 200
 BUTTON_HEIGHT = 50
 WHITE = (255,255,255)
+TILE_WIDTH = 195
+TILE_Height = 195
+ 
 
 x_coordinate_of_buttons = WIDTH/2 - BUTTON_WIDTH//2
 
@@ -29,7 +32,10 @@ background_img = pygame.image.load("images/background.png")
 icon_img = pygame.image.load("images/icon.png")
 horizontal_line_img = pygame.image.load("images/horizontal_line.png")
 vertical_line_img = pygame.image.load("images/vertical_line.png")
-
+x_img = pygame.image.load("images/x.png")
+o_img = pygame.image.load("images/o.png")
+player_x_img = pygame.image.load("images/player_x.png")
+player_o_img = pygame.image.load("images/player_o.png")
 #############################################
 
 pygame.display.set_icon(icon_img)
@@ -54,8 +60,8 @@ def craete_introduction_buttons():
     Returns: 
         Tuple: tuple of the created buttons 
     """    
-    play_button = button.Button(BUTTON_COLOR, BUTTON_HOVER_OVER_COLOR, 0, 0, BUTTON_WIDTH, BUTTON_HEIGHT, TEXT_COLOR, BUTTON_TEXT_HOVER_OVER_COLOR, "PLAY")
-    quit_button = button.Button(BUTTON_COLOR, BUTTON_HOVER_OVER_COLOR, 0, 0, BUTTON_WIDTH, BUTTON_HEIGHT, TEXT_COLOR, BUTTON_TEXT_HOVER_OVER_COLOR, "QUIT")
+    play_button = buttons.Button(BUTTON_COLOR, BUTTON_HOVER_OVER_COLOR, 0, 0, BUTTON_WIDTH, BUTTON_HEIGHT, TEXT_COLOR, BUTTON_TEXT_HOVER_OVER_COLOR, "PLAY")
+    quit_button = buttons.Button(BUTTON_COLOR, BUTTON_HOVER_OVER_COLOR, 0, 0, BUTTON_WIDTH, BUTTON_HEIGHT, TEXT_COLOR, BUTTON_TEXT_HOVER_OVER_COLOR, "QUIT")
 
     #fix the position of the buttons based on their sizes:-
     play_button.x = x_coordinate_of_buttons
@@ -66,6 +72,73 @@ def craete_introduction_buttons():
 
     return (play_button, quit_button)
 
+
+def select_player():  
+    player_x_button = buttons.SelectPlayerButton(-300, OFFSET_HEIGHT_UP+3, 300-3, HEIGHT-OFFSET_HEIGHT_UP-5, BUTTON_COLOR, BUTTON_HOVER_OVER_COLOR, player_x_img)
+    player_y_button = buttons.SelectPlayerButton(600, OFFSET_HEIGHT_UP+3, 300-3, HEIGHT-OFFSET_HEIGHT_UP-5, BUTTON_COLOR, BUTTON_HOVER_OVER_COLOR, player_o_img)
+    
+    while True:
+        DISPLAY_SCREEN.blit(background_img, (0, 0))
+        pygame.draw.line(DISPLAY_SCREEN, (100,0,0), (0,OFFSET_HEIGHT_UP), (WIDTH,OFFSET_HEIGHT_UP), 3) #horizontal line
+
+        #to draw the buttons inan animated way
+        while player_x_button.x < 0 or player_y_button.x > WIDTH/2:
+            DISPLAY_SCREEN.blit(background_img, (0, 0))
+            pygame.draw.line(DISPLAY_SCREEN, (100,0,0), (0,OFFSET_HEIGHT_UP), (WIDTH,OFFSET_HEIGHT_UP), 3) #horizontal line
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+
+            #to draw the playing_field in an animated way in the beginning
+            if player_x_button.x < 0:
+                player_x_button.x += 0.8
+            if player_y_button.x > WIDTH/2:
+                player_y_button.x -= 0.8
+            
+            player_x_button.blit(DISPLAY_SCREEN)
+            player_y_button.blit(DISPLAY_SCREEN)
+            pygame.display.update()
+
+    
+        mouse_position = pygame.mouse.get_pos() # get the position of the mouse
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                player_x_button.is_clicked(mouse_position)
+                player_y_button.is_clicked(mouse_position)
+
+        player_x_button.blit(DISPLAY_SCREEN, mouse_position)
+        player_y_button.blit(DISPLAY_SCREEN, mouse_position)
+        pygame.display.update()
+
+        if player_x_button.selected or player_y_button.selected:
+            
+            if player_x_button.selected: player_img = x_img
+            if player_y_button.selected: player_img = o_img
+
+            while player_x_button.x > 0 or player_y_button.x < WIDTH:
+                DISPLAY_SCREEN.blit(background_img, (0, 0))
+                pygame.draw.line(DISPLAY_SCREEN, (100,0,0), (0,OFFSET_HEIGHT_UP), (WIDTH,OFFSET_HEIGHT_UP), 3) #horizontal line
+
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        pygame.quit()
+
+                #to draw the playing_field in an animated way in the beginning
+                if player_x_button.x > -300-20:
+                    player_x_button.x -= 0.8
+                if player_y_button.x < WIDTH+20:
+                    player_y_button.x += 0.8 
+                
+                player_x_button.blit(DISPLAY_SCREEN)
+                player_y_button.blit(DISPLAY_SCREEN)
+                pygame.display.update()
+
+            start_game(player_img)
+
+        
 
 def start_intro(status = ""):
     (play_button, quit_button) = craete_introduction_buttons()
@@ -86,7 +159,7 @@ def start_intro(status = ""):
                 pygame.quit()
             if play_button.is_clicked(mouse_position, event):
                 run = False # to stop running the introductory screen
-                start_game()
+                select_player()
             if quit_button.is_clicked(mouse_position, event):
                 pygame.quit()
 
@@ -101,10 +174,9 @@ def start_intro(status = ""):
         pygame.display.update()
 
 
-def draw_playing_field(lines):
+def draw_playing_field(lines, tiles, player_img, event=None):
 
-    run_animation = True
-    while run_animation:
+    while lines["horizontal1_x"] <= 0 or lines["horizontal2_x"] >= 0 or lines["vertical1_x"] <= (WIDTH/3) or lines["vertical2_x"] >= (WIDTH/3)*2:
         DISPLAY_SCREEN.blit(background_img, (0, 0))
         pygame.draw.line(DISPLAY_SCREEN, (100,0,0), (0,OFFSET_HEIGHT_UP), (WIDTH,OFFSET_HEIGHT_UP), 3) #horizontal line
 
@@ -122,18 +194,34 @@ def draw_playing_field(lines):
         if lines["vertical2_x"] > (WIDTH/3)*2:
             lines["vertical2_x"] -= 0.2
 
+        DISPLAY_SCREEN.blit(background_img, (0, 0))
         DISPLAY_SCREEN.blit(horizontal_line_img, (lines["horizontal1_x"], lines["horizontal1_y"]))
         DISPLAY_SCREEN.blit(horizontal_line_img, (lines["horizontal2_x"], lines["horizontal2_y"]))
         DISPLAY_SCREEN.blit(vertical_line_img, (lines["vertical1_x"], lines["vertical1_y"]))
         DISPLAY_SCREEN.blit(vertical_line_img, (lines["vertical2_x"], lines["vertical2_y"]))
-
-        if lines["horizontal1_x"] >= 0 and lines["horizontal2_x"] <= 0 and lines["vertical1_x"] >= (WIDTH/3) and lines["vertical2_x"] <= (WIDTH/3)*2:
-            run_animation = False
-
         pygame.display.update()
 
+    DISPLAY_SCREEN.blit(background_img, (0, 0))
+    pygame.draw.line(DISPLAY_SCREEN, (100,0,0), (0,OFFSET_HEIGHT_UP), (WIDTH,OFFSET_HEIGHT_UP), 3) #horizontal line
+    DISPLAY_SCREEN.blit(horizontal_line_img, (lines["horizontal1_x"], lines["horizontal1_y"]))
+    DISPLAY_SCREEN.blit(horizontal_line_img, (lines["horizontal2_x"], lines["horizontal2_y"]))
+    DISPLAY_SCREEN.blit(vertical_line_img, (lines["vertical1_x"], lines["vertical1_y"]))
+    DISPLAY_SCREEN.blit(vertical_line_img, (lines["vertical2_x"], lines["vertical2_y"]))
 
-def start_game():
+    mouse_position = pygame.mouse.get_pos() # get the position of the mouse
+
+    if event and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+        for tile in tiles.values():
+            tile.symbol_img = player_img
+            tile.is_clicked(mouse_position)
+
+    for tile in tiles.values():
+        tile.blit(DISPLAY_SCREEN, mouse_position)
+
+    pygame.display.update()
+
+
+def start_game(player_img):
     #horizontal lines
     horizontal1_x = -600 # first horizontal line. It comes from the left side
     horizontal1_y = OFFSET_HEIGHT_UP + ((HEIGHT-OFFSET_HEIGHT_UP)/3)
@@ -144,7 +232,7 @@ def start_game():
     vertical1_y = OFFSET_HEIGHT_UP
     vertical2_x = WIDTH # second vertical line. It comes from the right side
     vertical2_y = OFFSET_HEIGHT_UP
-    lines = { #dictionat of the lines
+    lines = { #dictionary of the lines
         "horizontal1_x": horizontal1_x,
         "horizontal1_y": horizontal1_y,
         "horizontal2_x": horizontal2_x,
@@ -154,17 +242,30 @@ def start_game():
         "vertical2_x": vertical2_x,
         "vertical2_y": vertical2_y
     }
-    
+
+    tiles = { #dictionary of the tiles
+        1: buttons.Tile(2, OFFSET_HEIGHT_UP+3, TILE_WIDTH, TILE_Height, TILE_HOVER_OVER_COLOR, TILE_OCCUPIED_COLOR),
+        2: buttons.Tile(203, OFFSET_HEIGHT_UP+3, TILE_WIDTH, TILE_Height, TILE_HOVER_OVER_COLOR, TILE_OCCUPIED_COLOR),
+        3: buttons.Tile(403, OFFSET_HEIGHT_UP+3, TILE_WIDTH, TILE_Height, TILE_HOVER_OVER_COLOR, TILE_OCCUPIED_COLOR),
+        4: buttons.Tile(2, OFFSET_HEIGHT_UP+200+4, TILE_WIDTH, TILE_Height, TILE_HOVER_OVER_COLOR, TILE_OCCUPIED_COLOR),
+        5: buttons.Tile(203, OFFSET_HEIGHT_UP+200+4, TILE_WIDTH, TILE_Height, TILE_HOVER_OVER_COLOR, TILE_OCCUPIED_COLOR),
+        6: buttons.Tile(403, OFFSET_HEIGHT_UP+200+4, TILE_WIDTH, TILE_Height, TILE_HOVER_OVER_COLOR, TILE_OCCUPIED_COLOR),
+        7: buttons.Tile(2, OFFSET_HEIGHT_UP+400+4, TILE_WIDTH, TILE_Height, TILE_HOVER_OVER_COLOR, TILE_OCCUPIED_COLOR),
+        8: buttons.Tile(203, OFFSET_HEIGHT_UP+400+4, TILE_WIDTH, TILE_Height, TILE_HOVER_OVER_COLOR, TILE_OCCUPIED_COLOR),
+        9: buttons.Tile(403, OFFSET_HEIGHT_UP+400+4, TILE_WIDTH, TILE_Height, TILE_HOVER_OVER_COLOR, TILE_OCCUPIED_COLOR)
+    }
+
     while True:
-        DISPLAY_SCREEN.blit(background_img, (0, 0))
-
-        pygame.draw.line(DISPLAY_SCREEN, (100,0,0), (0,OFFSET_HEIGHT_UP), (WIDTH,OFFSET_HEIGHT_UP), 3) #horizontal line
-
+        DISPLAY_SCREEN.blit(background_img, (0, 0))        
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                draw_playing_field(lines, tiles, player_img, event)
 
-        draw_playing_field(lines)
+        draw_playing_field(lines, tiles, player_img)
+
+        # print("hiii")
         pygame.display.update()
 
 
